@@ -12,11 +12,13 @@ void
 ping(void)
 {
   release(&myproc()->lock);
+  intr_on();
   for (;;) {
-    for (int i = 0; i < 100000000; i++);
     printf("running proc %d on hart %d\n", myproc()->pid, cpuid());
-    //yield();
-    intr_on();
+
+    // spin for a while to reduce the spam
+    for (int i = 0; i < 50000000; i++)
+        continue;
   }
 }
 

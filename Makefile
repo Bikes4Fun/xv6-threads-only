@@ -14,6 +14,7 @@ OBJS = \
   $K/proc.o \
   $K/swtch.o \
   $K/trap.o \
+  $K/sleeplock.o \
   $K/kernelvec.o \
   $K/kernel_threads.o
 
