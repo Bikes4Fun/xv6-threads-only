@@ -144,7 +144,6 @@ scheduler(void)
         found = 1;
       }
       release(&p->lock);
-      //intr_on();
     }
     if(found == 0) {
       // nothing to run; stop running on this core until an interrupt.
