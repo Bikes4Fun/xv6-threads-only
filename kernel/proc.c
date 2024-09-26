@@ -127,9 +127,6 @@ scheduler(void)
     // processes are waiting.
     intr_on();
 
-    // The most recent process to run may have had interrupts
-    // turned off; enable them to avoid a deadlock if all
-    // processes are waiting.
     int found = 0;
     for(p = proc; p < &proc[NPROC]; p++) {
       acquire(&p->lock);
