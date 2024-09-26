@@ -21,6 +21,7 @@ procinit(void)
 {
   struct proc *p;
   
+  // question: create test processes?
   initlock(&pid_lock, "nextpid");
   for(p = proc; p < &proc[NPROC]; p++) {
       initlock(&p->lock, "proc");
