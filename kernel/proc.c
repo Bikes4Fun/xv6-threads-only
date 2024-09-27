@@ -136,7 +136,7 @@ scheduler(void)
         // Switch to chosen process.  It is the process's job
         // to release its lock and then reacquire it
         // before jumping back to us.
-        start a timer to share time evenly between processes
+        // start a timer to share time evenly between processes
         p->state = RUNNING;
         c->proc = p;
         swtch(&c->context, &p->context);
