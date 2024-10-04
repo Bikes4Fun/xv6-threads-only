@@ -122,6 +122,12 @@ scheduler(void)
   struct cpu *c = mycpu();
 
   c->proc = 0;
+  char* ticket_table = kalloc();
+
+  for (p = proc; p < &proc[NPROC]; p++){
+    ticket_table[p->pid] = p->priority;
+  }
+
   for(;;){
     // The most recent process to run may have had interrupts
     // turned off; enable them to avoid a deadlock if all
@@ -146,6 +152,13 @@ scheduler(void)
         c->proc = 0;
         found = 1;
       }
+      if (p->current_priority > 0) {
+        p->current_priority -= 1;
+      } else {
+        p->current_priority = p->priority;
+      }
+      
+      ticket_table[p->pid] = p->current_priority;
       release(&p->lock);
     }
     if(found == 0) {

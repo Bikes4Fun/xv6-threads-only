@@ -92,6 +92,7 @@ struct proc {
   int xstate;                  // Exit status to be returned to parent's wait
   int pid;                     // Process ID
   int priority;             // deanna: maybe we will assign a priority to processes in kthreadinit kernel_threads?
+  int current_priority;
   // wait_lock must be held when using this:
   struct proc *parent;         // Parent process
 
