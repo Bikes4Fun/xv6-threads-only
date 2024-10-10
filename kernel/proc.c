@@ -136,7 +136,7 @@ scheduler(void)
 
   unsigned int mul_prime = 2719;
   unsigned int inc_prime = 5813;
-  unsigned int SEED = cpuid();
+  unsigned int SEED = (r_time() + inc_prime) ^ cpuid();
   int random;
   int* ticket_table = kalloc();
 
@@ -153,47 +153,15 @@ scheduler(void)
     int ticket_sum = 0;
     for (int i = 0; i < NPROC; i++){
       p = &proc[i]; // p = a reference to a pointer to one struct proc item in proc list
-      if (p->state == RUNNABLE) {
-        ticket_table[i] = p->priority;
-        ticket_sum += p->priority;
+      if (p->state != UNUSED && p->state != RUNNING) {
+        ticket_table[i] = p->orig_tickets;
+        ticket_sum += p->orig_tickets;
+        if (p->state == RUNNABLE) {
+          found = 1;
+        }
       }
     }
-
-    // set found to one: assume we have not found any runnable processes 
-    // until/unless we find one below and then set found to 1
-    // for(p = proc; p < &proc[NPROC]; p++) {
-    //   acquire(&p->lock);
-
-    //   if(p->state == RUNNABLE) {
-    //     // It is the process's job
-    //     // to release its lock and then reacquire it
-    //     // before jumping back to us.
-    //     // start a timer to share time evenly between processes
-    //     p->state = RUNNING;
-    //     c->proc = p;
-    //     // Switch to chosen process.  
-    //     // Switch is returned after process finishes? 
-    //     swtch(&c->context, &p->context);
-
-    //     // Process is done running for now.
-    //     // It should have changed its p->state before coming back.
-    //     c->proc = 0;
-    //     found = 1;
-    //   }
-    //   // // deanna: possibly don't need this 
-    //   // if (p->current_priority > 0) {
-    //   //   p->current_priority -= 1;
-    //   // } else {
-    //   //   p->current_priority = p->priority;
-    //   // }
-    //   // // this wil definitely current break the indexing of the ticket table because it's no longer assigned this way:
-    //   // ticket_table[p->pid] = p->current_priority; 
-    //   // // end of possibly don't need this
-      
-    //   release(&p->lock); 
-
-    // }
-    
+ 
     if(found == 0) {
       // nothing to run; stop running on this core until an interrupt.
       intr_on();
@@ -214,6 +182,7 @@ scheduler(void)
             swtch(&c->context, &p->context);
             c->proc = 0;
           }
+          release(&p->lock);
         }
       }
     }
@@ -306,3 +275,42 @@ wakeup(void *chan)
     }
   }
 }
+
+
+
+// old scheduler code and notes 
+    // set found to one: assume we have not found any runnable processes 
+    // until/unless we find one below and then set found to 1
+    // for(p = proc; p < &proc[NPROC]; p++) {
+    //   acquire(&p->lock);
+
+    //   if(p->state == RUNNABLE) {
+    //     // It is the process's job
+    //     // to release its lock and then reacquire it
+    //     // before jumping back to us.
+    //     // start a timer to share time evenly between processes
+    //     p->state = RUNNING;
+    //     c->proc = p;
+    //     // Switch to chosen process.  
+    //     // Switch is returned after process finishes? 
+    //     swtch(&c->context, &p->context);
+
+    //     // Process is done running for now.
+    //     // It should have changed its p->state before coming back.
+    //     c->proc = 0;
+    //     found = 1;
+    //   }
+    //   // // deanna: possibly don't need this 
+    //   // if (p->current_priority > 0) {
+    //   //   p->current_priority -= 1;
+    //   // } else {
+    //   //   p->current_priority = p->priority;
+    //   // }
+    //   // // this wil definitely current break the indexing of the ticket table because it's no longer assigned this way:
+    //   // ticket_table[p->pid] = p->current_priority; 
+    //   // // end of possibly don't need this
+      
+    //   release(&p->lock); 
+
+    // }
+   

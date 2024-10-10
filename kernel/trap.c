@@ -49,7 +49,7 @@ kerneltrap()
   }
 
   // give up the CPU if this is a timer interrupt.
-  if (which_dev == 2) printf("timer interrupt on cpu %d\n", cpuid());
+  // if (which_dev == 2) printf("timer interrupt on cpu %d\n", cpuid()); print timer interrupt 
   if(which_dev == 2 && myproc() != 0)
     yield();
 
