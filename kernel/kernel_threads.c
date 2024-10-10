@@ -15,7 +15,7 @@ ping(void){
   intr_on();
   int mypid = myproc()->pid;
 
-  if (strcmp(myproc()->name, "system_check") == 0) {
+  if ((myproc()->name, "system_check") == 0) {
     system_check();
   }
   else {
