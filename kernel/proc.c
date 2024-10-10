@@ -13,7 +13,9 @@ struct proc proc[NPROC];
 struct proc *initproc;
 
 int nextpid = 1;
+
 struct spinlock pid_lock;
+
 
 // initialize the proc table.
 void
@@ -33,6 +35,7 @@ procinit(void)
   }
 }
 
+
 // Must be called with interrupts disabled,
 // to prevent race with process being moved
 // to a different CPU.
@@ -42,6 +45,7 @@ cpuid()
   int id = r_tp();
   return id;
 }
+
 
 // Return this CPU's cpu struct.
 // Interrupts must be disabled.
@@ -53,6 +57,7 @@ mycpu(void)
   return c;
 }
 
+
 // Return the current struct proc *, or zero if none.
 struct proc*
 myproc(void)
@@ -63,6 +68,7 @@ myproc(void)
   pop_off();
   return p;
 }
+
 
 int
 allocpid()
@@ -76,6 +82,7 @@ allocpid()
 
   return pid;
 }
+
 
 // Look in the process table for an UNUSED proc.
 // If found, initialize state required to run in the kernel,
@@ -108,6 +115,7 @@ found:
   return p;
 }
 
+
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
 // Scheduler never returns.  It loops, doing:
@@ -118,15 +126,19 @@ found:
 void
 scheduler(void)
 {
-  struct proc *p;
+  // proc = [ struct proc *1, struct proc *2 ...]
+  // proc: shared between CPU's 
+  // struct proc *p; = a pointer to one of the 'struct proc' types
+  // from the list of struct procs named 'proc'
+  struct proc *p; 
   struct cpu *c = mycpu();
-
   c->proc = 0;
-  char* ticket_table = kalloc();
 
-  for (p = proc; p < &proc[NPROC]; p++){
-    ticket_table[p->pid] = p->priority;
-  }
+  unsigned int mul_prime = 2719;
+  unsigned int inc_prime = 5813;
+  unsigned int SEED = cpuid();
+  int random;
+  int* ticket_table = kalloc();
 
   for(;;){
     // The most recent process to run may have had interrupts
@@ -134,37 +146,76 @@ scheduler(void)
     // processes are waiting.
     intr_on();
 
+    // fill out a ticket table where the value is the amount of tickets
+    // which is accessible at the same index as it's relevant proc?
     int found = 0;
-    for(p = proc; p < &proc[NPROC]; p++) {
-      acquire(&p->lock);
-
-      if(p->state == RUNNABLE) {
-        // Switch to chosen process.  It is the process's job
-        // to release its lock and then reacquire it
-        // before jumping back to us.
-        // start a timer to share time evenly between processes
-        p->state = RUNNING;
-        c->proc = p;
-        swtch(&c->context, &p->context);
-
-        // Process is done running for now.
-        // It should have changed its p->state before coming back.
-        c->proc = 0;
-        found = 1;
+    
+    int ticket_sum = 0;
+    for (int i = 0; i < NPROC; i++){
+      p = &proc[i]; // p = a reference to a pointer to one struct proc item in proc list
+      if (p->state == RUNNABLE) {
+        ticket_table[i] = p->priority;
+        ticket_sum += p->priority;
       }
-      if (p->current_priority > 0) {
-        p->current_priority -= 1;
-      } else {
-        p->current_priority = p->priority;
-      }
-      
-      ticket_table[p->pid] = p->current_priority;
-      release(&p->lock);
     }
+
+    // set found to one: assume we have not found any runnable processes 
+    // until/unless we find one below and then set found to 1
+    // for(p = proc; p < &proc[NPROC]; p++) {
+    //   acquire(&p->lock);
+
+    //   if(p->state == RUNNABLE) {
+    //     // It is the process's job
+    //     // to release its lock and then reacquire it
+    //     // before jumping back to us.
+    //     // start a timer to share time evenly between processes
+    //     p->state = RUNNING;
+    //     c->proc = p;
+    //     // Switch to chosen process.  
+    //     // Switch is returned after process finishes? 
+    //     swtch(&c->context, &p->context);
+
+    //     // Process is done running for now.
+    //     // It should have changed its p->state before coming back.
+    //     c->proc = 0;
+    //     found = 1;
+    //   }
+    //   // // deanna: possibly don't need this 
+    //   // if (p->current_priority > 0) {
+    //   //   p->current_priority -= 1;
+    //   // } else {
+    //   //   p->current_priority = p->priority;
+    //   // }
+    //   // // this wil definitely current break the indexing of the ticket table because it's no longer assigned this way:
+    //   // ticket_table[p->pid] = p->current_priority; 
+    //   // // end of possibly don't need this
+      
+    //   release(&p->lock); 
+
+    // }
+    
     if(found == 0) {
       // nothing to run; stop running on this core until an interrupt.
       intr_on();
       asm volatile("wfi");
+    }
+    else { 
+      // draw a random number for tickets
+      SEED = (SEED * mul_prime + inc_prime);
+      random = SEED % ticket_sum;
+      for (int i = 0; i < NPROC; i ++) { 
+        int num = random - ticket_table[i];
+        if (num <= 0){
+          p = &proc[i];
+          acquire(&p->lock);
+          if (p->state == RUNNABLE) {
+            p->state = RUNNING; 
+            c->proc = p;
+            swtch(&c->context, &p->context);
+            c->proc = 0;
+          }
+        }
+      }
     }
   }
 }

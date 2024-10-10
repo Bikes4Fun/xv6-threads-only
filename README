@@ -1,3 +1,18 @@
+[] move random generator and make it not exceed 31 bits?
+[] determine how/when to interupt a running process once it is selected
+[] consider assigning tickets/tokens based on a priority level
+[] consider tests
+[] demo 
+[] 
+
+
+
+
+
+
+
+
+
 xv6 is a re-implementation of Dennis Ritchie's and Ken Thompson's Unix
 Version 6 (v6).  xv6 loosely follows the structure and style of v6,
 but is implemented for a modern RISC-V multiprocessor using ANSI C.
