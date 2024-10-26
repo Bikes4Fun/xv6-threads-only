@@ -51,7 +51,7 @@ kerneltrap()
   // give up the CPU if this is a timer interrupt.
   // if (which_dev == 2) printf("timer interrupt on cpu %d\n", cpuid()); print timer interrupt 
   if(which_dev == 2 && myproc() != 0)
-    yield();
+    yield(); // goes back to switch thing in the schedule
 
   // the yield() may have caused some traps to occur,
   // so restore trap registers for use by kernelvec.S's sepc instruction.
@@ -82,6 +82,7 @@ clockintr()
 int
 devintr()
 {
+  // why was an interrupt called / what type was it ?
   uint64 scause = r_scause();
 
   if(scause == 0x8000000000000005L){

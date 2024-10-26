@@ -19,21 +19,21 @@ ping(void){
   int color_key = (mypid << 3);
   
   // Clamp color_key to the range [0, 255]
-  if (color_key < 0) {
-      color_key = 0;
-  } else if (color_key > 254) {
-      color_key = 254;
+  if (color_key < 10) {
+      color_key = 10;
+  } else if (color_key > 120) {
+      color_key = 120;
   }
 
   // Calculate RGB values
-  int red = color_key; // This will always be non-negative
-  int green = (255 - color_key); // Vary green based on process ID
-  int blue = 255 - color_key; // Vary blue based on process ID
+  int red = 120 + color_key; // This will always be non-negative
+  int green = (255 - color_key*2); // Vary green based on process ID
+  int blue = 265 - color_key; // Vary blue based on process ID
 
   for (;;) {
     // Use RGB color mode
     printf("\x1b[38;2;%d;%d;%dm", red, green, blue); // Set foreground color
-    printf("pid %d ; cpu %d: ", mypid, cpuid() );
+    // printf("pid %d ; cpu %d: time: %d ", mypid, cpuid(), myproc()->time);
     tally++;
     for (int i = 1; i < tally; i++) {
       printf("|");

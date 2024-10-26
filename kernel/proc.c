@@ -139,8 +139,11 @@ scheduler(void)
   unsigned int SEED = (r_time() + inc_prime) ^ cpuid();
   int random;
   int* ticket_table = kalloc();
+  int* time_table = kalloc();
 
   for(;;){
+    int start;
+    int end;
     // The most recent process to run may have had interrupts
     // turned off; enable them to avoid a deadlock if all
     // processes are waiting.
@@ -177,10 +180,14 @@ scheduler(void)
           p = &proc[i];
           acquire(&p->lock);
           if (p->state == RUNNABLE) {
+            start = r_time();
             p->state = RUNNING; 
             c->proc = p;
             swtch(&c->context, &p->context);
             c->proc = 0;
+            end = r_time();
+            p->time += end-start;
+            time_table[i] = p->time;
           }
           release(&p->lock);
         }
